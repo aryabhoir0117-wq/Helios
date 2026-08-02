@@ -1,3 +1,26 @@
+# Environment
 .env
 .H/
+
+# Python
 __pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+*.egg
+dist/
+build/
+
+# IDE / editor
+.vscode/
+.idea/
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Docker (if you ever generate local volumes/data dumps)
+docker-compose.override.yml

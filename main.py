@@ -4,7 +4,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from beanie import init_beanie
 from dotenv import load_dotenv
 import os
-
+from fastapi.middleware.cors import CORSMiddleware
 from prometheus_fastapi_instrumentator import Instrumentator
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
@@ -35,7 +35,15 @@ async def lifespan(app: FastAPI):
     client.close()
 
 app = FastAPI(lifespan=lifespan)
+app = FastAPI(lifespan=lifespan)
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 app.include_router(servers.router)
 app.include_router(metrics.router)
 app.include_router(deployments.router)

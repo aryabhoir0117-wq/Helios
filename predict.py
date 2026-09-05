@@ -13,8 +13,7 @@ async def predict_trend(container_name: str) -> dict:
     now = time.time()
     start = now - 15 * 60
 
-    promql = f'rate(container_cpu_usage_seconds_total{{job="cadvisor", name="{container_name}"}}[1m])'
-    results = await query_prometheus_range(promql, start, now, step="30s")
+    promql = f'rate(container_cpu_usage_seconds_total{{job="cadvisor", id="{container_name}"}}[1m])'    results = await query_prometheus_range(promql, start, now, step="30s")
 
     print(f"🔍 DEBUG predict_trend: promql={promql}")
     print(f"🔍 DEBUG predict_trend: results={results}")

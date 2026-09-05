@@ -22,10 +22,7 @@ async def check_cpu_usage():
         if DEBUG_METRICS:
            print("RAW METRIC LABELS:", result["metric"])
 
-        if "name" not in result["metric"]:
-            continue
-
-        container_id = result["metric"].get("name", result["metric"].get("id", "unknown"))
+        container_id = result["metric"].get("id", "unknown")
         cpu_rate = float(result["value"][1])
 
         if cpu_rate > CPU_THRESHOLD:

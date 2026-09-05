@@ -15,10 +15,13 @@ async def execute_recovery(incident: Incident):
         return incident  # guardrail: not an auto-executable action
 
     client = docker.from_env()
-    container_name = incident.server_id
+
+    # incident.server_id is a cAdvisor cgroup path like "/docker/436de0f97545..."
+    # Docker's SDK needs just the container ID, not the cgroup path.
+    container_id = incident.server_id.replace("/docker/", "").strip("/")
 
     try:
-        container = client.containers.get(container_name)
+        container = client.containers.get(container_id)
         container.restart()
         incident.action_result = "success"
     except Exception as e:
@@ -37,7 +40,7 @@ async def execute_recovery(incident: Incident):
 
     try:
         results = await query_prometheus(
-            f'rate(container_cpu_usage_seconds_total{{job="cadvisor", name="{container_name}"}}[1m])'
+            f'rate(container_cpu_usage_seconds_total{{job="cadvisor", id="{incident.server_id}"}}[1m])'
         )
         if results:
             post_cpu = float(results[0]["value"][1])

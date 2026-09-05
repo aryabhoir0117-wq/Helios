@@ -1,19 +1,16 @@
 import time
 from prom_client import query_prometheus_range
 
-RISING_THRESHOLD = 0.02   # cores/sec slope to call it "rising"
+RISING_THRESHOLD = 0.02
 FALLING_THRESHOLD = -0.02
 
 
 async def predict_trend(container_name: str) -> dict:
-    """
-    Looks at the last 15 minutes of CPU usage for a container and
-    fits a simple straight-line trend to it. No ML — just least squares.
-    """
     now = time.time()
     start = now - 15 * 60
 
-    promql = f'rate(container_cpu_usage_seconds_total{{job="cadvisor", id="{container_name}"}}[1m])'    results = await query_prometheus_range(promql, start, now, step="30s")
+    promql = f'rate(container_cpu_usage_seconds_total{{job="cadvisor", id="{container_name}"}}[1m])'
+    results = await query_prometheus_range(promql, start, now, step="30s")
 
     print(f"🔍 DEBUG predict_trend: promql={promql}")
     print(f"🔍 DEBUG predict_trend: results={results}")
@@ -54,7 +51,6 @@ async def predict_trend(container_name: str) -> dict:
     return {"predicted_trend": trend, "predicted_cpu_in_2min": predicted}
 
 def _linear_regression(points: list[tuple[float, float]]) -> tuple[float, float]:
-    """Plain least-squares fit — dataset's small enough not to need numpy."""
     x0 = points[0][0]
     xs = [p[0] - x0 for p in points]
     ys = [p[1] for p in points]

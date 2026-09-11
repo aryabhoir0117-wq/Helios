@@ -175,5 +175,10 @@ through docker run ,,, started the stress test
  3)Grok API and for Fallback Gemini(root cause, gives summary, )
  4)
  </i>
+ daemonset.apps/cadvisor created — cAdvisor is now set to run as a DaemonSet: one copy on every node in your cluster (right now just 1 node, so 1 cAdvisor pod), collecting container metrics.
+service/cadvisor created — a stable internal address (cadvisor:8080) other pods (like Prometheus) can use to reach it, without needing to know its actual pod IP (which can change).
+configmap/prometheus-config created — your prometheus.yml config is now stored inside the cluster itself as a ConfigMap, so Prometheus can mount and read it like a regular file.
+deployment.apps/prometheus created — Prometheus itself is now running as a managed pod; if it crashes, the Deployment automatically restarts it.
+service/prometheus created — same idea as cAdvisor's service: a stable address (prometheus:9090) inside the cluster to reach Prometheus.
  
 

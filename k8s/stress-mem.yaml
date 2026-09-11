@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stress-mem
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: stress-mem
+  template:
+    metadata:
+      labels:
+        app: stress-mem
+    spec:
+      containers:
+        - name: stress-mem
+          image: polinux/stress
+          args: ["stress", "--vm", "1", "--vm-bytes", "200M", "--timeout", "300s"]
+          resources:
+            limits:
+              memory: "256Mi"

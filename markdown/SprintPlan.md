@@ -98,7 +98,7 @@ Cloud Migration Work
 /////////////
 ## Kubernetes Migration — Sprint 9
 
-## Sprint 9.1 — K8s Environment Setup (~20 min)
+## Sprint 9.1 — K8s Environment Setup(done in both environments) (~20 min)
 - [x] Install kubectl inside the Codespace/vs code
 - [x] Install Minikube (lightweight single-node K8s cluster) inside the Codespace
 - [x] Start Minikube: `minikube start --driver=docker`

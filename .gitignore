@@ -25,4 +25,4 @@ Thumbs.db
 # Docker (if you ever generate local volumes/data dumps)
 docker-compose.override.yml
 Frontend/
-.minikube-linux-amd64
+minikube-linux-amd64

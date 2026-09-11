@@ -31,8 +31,8 @@ async def _call_groq(prompt: str) -> str:
             "https://api.groq.com/openai/v1/chat/completions",
             headers={"Authorization": f"Bearer {GROQ_API_KEY}"},
             json={
-                "model": "llama-3.1-8b-instant",
-                "messages": [{"role": "user", "content": prompt}],
+            "model": "openai/gpt-oss-20b",               
+            "messages": [{"role": "user", "content": prompt}],
             },
         )
         resp.raise_for_status()

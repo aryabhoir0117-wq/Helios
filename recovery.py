@@ -6,7 +6,7 @@ from prom_client import query_prometheus
 from learn import generate_post_incident_report
 
 SAFE_ACTIONS = {"restart_container"}
-CPU_THRESHOLD = 0.5         # same threshold as detection.py
+CPU_THRESHOLD = 0.4         # same threshold as detection.py
 VERIFY_DELAY_SECONDS = 20    # wait for container to restart + report fresh metrics
 
 

@@ -24,3 +24,4 @@ Thumbs.db
 
 # Docker (if you ever generate local volumes/data dumps)
 docker-compose.override.yml
+Frontend/

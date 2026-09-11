@@ -75,22 +75,82 @@ Cloud Migration Work
 ## Sprint 8.1a — Codespaces Setup (today, ~30 min)
 - [x]Create Codespace on aryabhoir0117-wq/Helios
  Set up venv, pip install -r requirements.txt inside it
-- []Add .env secrets (MONGO_URI, GROQ_API_KEY, GEMINI_API_KEY)
-- []Verify python and docker both work inside the Codespace terminal
+- [x]Add .env secrets (MONGO_URI, GROQ_API_KEY, GEMINI_API_KEY)
+- [x]Verify python and docker both work inside the Codespace terminal
 ## Sprint 8.1b — Move the Observe Stack (~20 min)
-- []docker compose up -d inside Codespace (Prometheus + cAdvisor)
-- [ ]Confirm both targets show "UP" at the forwarded Prometheus port (9090)
+- [x]docker compose up -d inside Codespace (Prometheus + cAdvisor)
+- [x]Confirm both targets show "UP" at the forwarded Prometheus port (9090)
 ## Sprint 8.1c — Move Test Load (~15 min)
-- []Start server-1-cpu, server-2-mem, server-3-idle inside the Codespace- [x]Confirm docker ps shows all three running there, not locally
+- [x]Start server-1-cpu, server-2-mem, server-3-idle inside the Codespace
+- [x]Confirm docker ps shows all three running there, not locally
 ## Sprint 8.1d — Move the Backend (~15 min)
-- []uvicorn main:app --host 0.0.0.0 --port 8000 inside Codespace
-- []Forward port 8000, confirm /docs loads from your normal browser
+- [x]uvicorn main:app --host 0.0.0.0 --port 8000 inside Codespace
+- [x]Forward port 8000, confirm /docs loads from your normal browser
 ## Sprint 8.1e — End-to-End Verify (~15 min)
-- []Register the 3 servers via forwarded Swagger UI
+- [x]Register the 3 servers via forwarded Swagger UI
  Wait for incidents (CPU + memory) to appear via GET /incidents
-- []Trigger recovery on one, confirm it resolves — all from your browser, zero local load
+- [x]Trigger recovery on one, confirm it resolves — all from your browser, zero local load
+✅ Detection creates incidents from real cAdvisor/Prometheus data
+✅ AI explanation generates real text (Groq/Gemini fixed)
+✅ Recovery executes a real Docker restart
+✅ Verify step re-checks metrics and reports an honest result
+
+/////////////
+## Kubernetes Migration — Sprint 9
+
+## Sprint 9.1 — K8s Environment Setup (~20 min)
+- [x] Install kubectl inside the Codespace/vs code
+- [x] Install Minikube (lightweight single-node K8s cluster) inside the Codespace
+- [x] Start Minikube: `minikube start --driver=docker`
+- [x] Verify cluster is up: `kubectl get nodes` (should show 1 node, status "Ready")
+- [x] Verify kubectl can talk to it: `kubectl cluster-info`
+
+## Sprint 9.2 — Move Observability Stack to K8s (~30 min)
+- [ ] Write a Deployment + Service YAML for Prometheus (replaces its docker-compose entry)
+- [ ] Write a DaemonSet YAML for cAdvisor (DaemonSet, not Deployment — cAdvisor needs to run once per node to see ALL containers on that node, including future ones)
+- [ ] Apply both: `kubectl apply -f k8s/`
+- [ ] Confirm pods running: `kubectl get pods` (prometheus + cadvisor both "Running")
+- [ ] Port-forward Prometheus to check its UI: `kubectl port-forward svc/prometheus 9090:9090`
+- [ ] Confirm cAdvisor target shows "UP" in Prometheus, same as before
+
+## Sprint 9.3 — Migrate Stress-Test Servers to K8s Deployments (~30 min)
+- [ ] Write one Deployment YAML for CPU-stress pods, with `replicas: 5` to start
+- [ ] Write one Deployment YAML for memory-stress pods, `replicas: 3`
+- [ ] Apply: `kubectl apply -f k8s/stress-cpu.yaml -f k8s/stress-mem.yaml`
+- [ ] Confirm: `kubectl get pods` shows all 8 running
+- [ ] Confirm cAdvisor is picking up their CPU/memory usage (check raw metrics via port-forward)
+
+## Sprint 9.4 — Update Backend to Read K8s Metrics Correctly (~20 min)
+- [ ] Confirm `detection.py`'s existing PromQL query still works unchanged (cAdvisor's `id=` label format is the same regardless of Docker vs K8s — this should just work)
+- [ ] Point your FastAPI backend at the new port-forwarded Prometheus (`localhost:9090`, same as before — no code change needed here, just re-verify)
+- [ ] Run backend locally/Codespace as usual, confirm incidents still get created from K8s pods
+
+## Sprint 9.5 — Fix Recovery for Kubernetes (IMPORTANT — breaking change) (~30-45 min)
+- [ ] Recognize the problem: `recovery.py` currently uses the Docker Python SDK (`docker.from_env()`) to restart containers directly — this **will not work** for K8s-managed pods, since Kubernetes owns their lifecycle, not raw Docker
+- [ ] Rewrite recovery logic: instead of `docker restart`, the K8s-native equivalent is **deleting the pod** — a Deployment's controller automatically notices and recreates a fresh replacement pod within seconds
+- [ ] Add the Kubernetes Python client (`pip install kubernetes`) to `requirements.txt`
+- [ ] Update `recovery.py`: replace Docker SDK calls with `kubernetes.client.CoreV1Api().delete_namespaced_pod(name, namespace)`
+- [ ] Update `container_id` parsing logic — K8s pod names differ from Docker container ID hashes, so `detection.py`'s label-matching may need adjusting too (cAdvisor labels pods differently — likely via `pod` or `container_label_io_kubernetes_pod_name` labels instead of raw `id=`)
+- [ ] Test recovery again using a `test_recovery.py`-style script, adapted for pod deletion instead of Docker restart
+
+## Sprint 9.6 — Live Scaling Demo Prep (~20 min)
+- [ ] Test scaling up live: `kubectl scale deployment stress-cpu --replicas=20`
+- [ ] Confirm all 20 pods appear in `kubectl get pods` within seconds
+- [ ] Confirm Prometheus/cAdvisor automatically start reporting metrics for all new pods (no manual reconfiguration needed — this is K8s's core value prop)
+- [ ] Confirm `/incidents` starts reflecting incidents from many more servers than before
+- [ ] Practice the "wow" moment for your demo: show `kubectl get pods` before, run the scale command live, show it again after — instant visual proof of scale
+
+## Sprint 9.7 — Documentation + Cleanup (~15 min)
+- [ ] Write a short `k8s/README.md` explaining what each YAML does (helps for viva/demo Q&A)
+- [ ] Update `start.sh`/`start.ps1` (or write a new `start-k8s.sh`) to bring up Minikube + apply all manifests in one command, matching your existing automation habit
+- [ ] Commit and push all `k8s/*.yaml` files to the repo
+
+## Sprint 9.8 — Optional Stretch: Backend on K8s too (~30-45 min, later)
+- [ ] Containerize your FastAPI backend (Dockerfile — may already partially exist)
+- [ ] Write a Deployment + Service for it
+- [ ] Fully retire `docker-compose.yml` in favor of pure K8s manifests, if desired
 ## Sprint 8.1f — Automate it (optional, later)
-- []- [x] Write a .devcontainer/devcontainer.json so a fresh Codespace auto-installs deps and starts services on open, instead of manual steps each time
+- []Write a .devcontainer/devcontainer.json so a fresh Codespace auto-installs deps and starts services on open, instead of manual steps each time
 ## Sprint 8.1g — Deploy Backend to Render (~30-45 min)
 - [] Create a Render Web Service pointing at aryabhoir0117-wq/Helios
 - [] Set build command (pip install -r requirements.txt) and start command (uvicorn main:app --host 0.0.0.0 --port $PORT)
